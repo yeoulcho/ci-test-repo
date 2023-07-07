@@ -1,0 +1,57 @@
+name: Spring Java CI with Gradle
+
+on:
+  push:
+    branches: ["main"]
+    
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    #Java 17버전 설정
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/set-up-java@v3
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+      
+      #CI
+      - name: create application for CI Test
+        run: |
+          mkdir -p src/main/resources
+          cd src/main/resources
+          echo "${{ secrets.DEVELOPMENT_CI_CONFIG }} " >> application.properties
+          
+      #CI mysql
+      - name: Setup MySQL
+        uses: samin/mysql-action@v1
+        with:
+          character set server: 'utf8'
+          mysql database: 'jpa_test'
+          mysql user: ${{ secrets.DB_USER }}
+          mysql password: ${{ secrets.DB_PASSWORD }}
+      
+      #gradle 권한 부녀
+      - name: Grant Permission to gradlew
+        run: chmod +x gradlew
+        
+      #프로젝트 빌드
+      - name: Build Project with gradlew
+        run: ./gradlew clean build -x test
+        
+      #mocking 테스트 구동
+      - name: Mocking Test with gradlew
+        run: |
+          ./gradlew --info test
+          
+      #Test 완료 트리거 신초 전송
+      - name: send TEST_FINISH_TRIGGER
+        run: |
+          curl -x POST http://api.github.com/repos/${{ github.repository }} /dispatches \
+            -H 'Accept: application/vnd.github.v3+json' \
+            -u ${{ secrets.
+            
+        
+          
